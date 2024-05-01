@@ -1,5 +1,5 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use audiocloud_shared::*;
+use audiocloud_lib::*;
 use serde::Deserialize;
 
 #[get("/echo")]
@@ -17,10 +17,8 @@ async fn ping_pong() -> impl Responder {
 }
 #[post("/search")]
 async fn search(data: web::Data<AppState>, query: web::Json<SearchParams>) -> impl Responder {
-    println!("New request!");
     let params = query.into_inner();
     let res = search_lib(&data.lib, &params);
-    print!("{}", serde_json::to_string(&res).unwrap());
     HttpResponse::Ok().json(res)
 }
 
@@ -29,8 +27,6 @@ struct AppState {
 }
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let lib = load_lib_json("Testlib.json");
-
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(AppState {
