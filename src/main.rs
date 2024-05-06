@@ -68,7 +68,13 @@ async fn main() -> std::io::Result<()> {
             .service(echo)
             .service(search)
             .service(gen_lib)
-            .service(actix_fs::Files::new(&settings.lib_content_dir, ".").show_files_listing())
+            .service(
+                actix_fs::Files::new(
+                    &("samples/".to_string() + &settings.lib_content_dir),
+                    &settings.lib_content_dir,
+                )
+                .show_files_listing(),
+            )
     })
     .bind(("127.0.0.1", 4040))?
     .run()
