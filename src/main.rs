@@ -83,7 +83,7 @@ async fn main() -> std::io::Result<()> {
                 .show_files_listing(),
             )
     })
-    .bind(("0.0.0.0", 8081))?
+    .bind(("0.0.0.0", 4040))?
     .run()
     .await
 }
