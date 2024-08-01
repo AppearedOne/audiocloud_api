@@ -2,14 +2,8 @@ use actix_files as actix_fs;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use audiocloud_lib::*;
 use serde::{Deserialize, Serialize};
-use std::env;
 use std::fs;
-use std::process::exit;
 
-#[get("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
 #[get("/gen_lib")]
 async fn gen_lib(req_body: String) -> impl Responder {
     HttpResponse::Ok().body("Created library")
@@ -19,6 +13,13 @@ async fn ping_pong() -> impl Responder {
     println!("Req /");
     HttpResponse::Ok().body("Server is running")
 }
+
+#[get("/packs")]
+async fn get_packs(data: web::Data<AppState>) -> impl Responder {
+    let res = get_packs_metadata(&data.lib);
+    HttpResponse::Ok().json(res)
+}
+
 #[post("/search")]
 async fn search(data: web::Data<AppState>, query: web::Json<SearchParams>) -> impl Responder {
     let params = query.into_inner();
@@ -50,24 +51,30 @@ struct AppState {
 async fn main() -> std::io::Result<()> {
     let settings = ServerSettings::load_from_file("config.json");
     /*let pack = load_pack(
-        "Testlib/",
+        "Testlib/Battery Selection",
         "Battery4 Selection",
         "Example library using a few Battery4 drums",
     );
+    let pack2 = load_pack(
+        "Testlib/Platinum Loops",
+        "Platinum Loops",
+        "Example using loops",
+    );
     let testlib_minimal = SampleLibrary {
         name: "Testlib_minimal.json".to_string(),
-        packs: vec![pack],
+        packs: vec![pack, pack2],
     };
-    save_lib_json(&testlib_minimal, ""); */
+    save_lib_json(&testlib_minimal, "");
+    exit(2);*/
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(AppState {
                 lib: load_lib_json(&settings.lib_path),
             }))
             .service(ping_pong)
-            .service(echo)
             .service(search)
             .service(gen_lib)
+            .service(get_packs)
             .service(
                 actix_fs::Files::new(
                     &("samples/".to_string() + &settings.lib_content_dir),
@@ -76,7 +83,7 @@ async fn main() -> std::io::Result<()> {
                 .show_files_listing(),
             )
     })
-    .bind(("127.0.0.1", 4040))?
+    .bind(("0.0.0.0", 8081))?
     .run()
     .await
 }
